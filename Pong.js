@@ -14,8 +14,8 @@ var kachel = 10
 var allkachel = 72000
 var ctx = null
 var gameId = null
-var ballspeedx = 0
-var ballspeedy = 0
+var ballspeed = 1
+var angle =  0.25 * Math.PI //Math.random() * 2.00 * Math.PI 
 var pause = false
 const UP_KEY = 38;
 const DOWN_KEY = 40;
@@ -24,23 +24,25 @@ const S_KEY = 83;
 const P_KEY = 80;
 var p1score = 0;
 var p2score = 0;
+var keysdown = {}
+
 
 function gameLoop () {
     drawfield() 
-    if (pause == true) console.log ('pause') 
+    if (pause == true) console.log ('pause')
     if (!pause) {  
-        Kollision()
-        Clock1()
-        Clock2()  
-        Score()     
+        directionchange()
+        ballball()
+        Score() 
+  
     } 
 }
-function border() {
-    if (p1positiony == 0) {
-        
-    }
+function ballball() {
+    var deltax = Math.cos(angle)* ballspeed
+    var deltay = Math.sin(angle)* ballspeed
+    ballx += deltax
+    bally -= deltay
 }
-
 function Score () {
     if (ballx < p1positionx) {
         p2score++
@@ -48,52 +50,21 @@ function Score () {
         p1score++
     }
 }
-function Kollision () {
-    if (ballx && bally == p1positionx && p1positiony && ballspeedx == 1 ) {
-        ballspeedx = -1
-    } else if (ballx && bally == p1positionx && p1positiony && ballspeedx == 2) {
-        ballspeedx = -2
-    } else if (ballx && bally == p1positionx && p1positiony && ballspeedx == 3) {
-        ballspeedx = -3 
-    }
-    if (ballx && bally == p1positionx && p1positiony && ballspeedx == -1 ) {
-        ballspeedx = 1
-    } else if (ballx && bally == p1positionx && p1positiony && ballspeedx == -2) {
-        ballspeedx = 2
-    } else if (ballx && bally == p1positionx && p1positiony && ballspeedx == -3) {
-        ballspeedx = 3 
-    }
-}
-function Clock1 () {
-    for (var clocknumber1 = 0;clocknumber1 < 3001;clocknumber1++ ) {
-        if (clocknumber1 == 3000) {
-            ballspeedx = 2
-            ballspeedy = 2
-        }
-    }
-}
-function Clock2 () {
-    for (var clocknumber2 = 0;clocknumber2 < 6001;clocknumber2++) {
-        if (clocknumber2 == 6000) {
-        ballspeedx = 3
-        ballspeedy = 3
-        }
-    }
-}
+
 function directionchange (evt) {
-    if (evt.keyCode == UP_KEY) {
-        p2positiony += -10
+    if (UP_KEY in keysdown && p2positiony > 10) {
+        p2positiony += -2
         pause = false
-    }if (evt.keyCode == DOWN_KEY) {
-        p2positiony += 10
+    }if (DOWN_KEY in keysdown && p2positiony < 510) {
+        p2positiony += 2
         pause = false
-    } if (evt.keyCode == W_KEY) {
-        p1positiony += -10
+    } if (W_KEY in keysdown && p1positiony > 10) {
+        p1positiony += -2
         pause = false
-    } if (evt.keyCode == S_KEY) {
-        p1positiony += 10
+    } if (S_KEY in keysdown && p1positiony < 510) {
+        p1positiony += 2
         pause = false
-    } if (evt.keyCode == P_KEY) {
+    } if (P_KEY in keysdown) {
         pause = !pause
     }
 }
@@ -111,8 +82,8 @@ var gradient = ctx.createLinearGradient(0, 0, 1200, 0);
 gradient.addColorStop("0", "blue");
 gradient.addColorStop("0.5", "lime");
 gradient.addColorStop("1", "crimson");
-gradient.addColorStop("0.3", "yellow");
-gradient.addColorStop("0.7", "lightblue");
+gradient.addColorStop("0.25", "lightblue");
+gradient.addColorStop("0.75", "yellow");
 ctx.strokeStyle = gradient;
 ctx.lineWidth = 20;
 ctx.strokeRect(0, 0, 1200, 600);
@@ -120,6 +91,11 @@ ctx.strokeRect(0, 0, 1200, 600);
 window.onload = function () {
     var canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
-    document.addEventListener('keydown', directionchange);
     gameId = setInterval(gameLoop, 10);
+    document.addEventListener ("keydown", function (evt) {
+        keysdown[evt.keyCode] = true;
+    }, false);
+    addEventListener ("keyup", function (evt) {
+        delete keysdown[evt.keyCode];
+    },false)
 } 
