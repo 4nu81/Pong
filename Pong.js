@@ -1,11 +1,12 @@
 
 var Ball = 10
+
 var ballheight = 10
 var ballwidth = 10
-var p1height = 80
-var p1width = 20
-var p2height = 80
-var p2width = 20
+
+var paddleheight = 80
+var paddlewidth = 20
+
 var p1positionx = 50
 var p1positiony = 260
 var p2positionx = 1130
@@ -28,62 +29,63 @@ var p1score = 0;
 var p2score = 0;
 var keysdown = {}
 var timer_couter = 0
+var then = Date.now();
+var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || window.mozRequestAnimationFrame;
 
 function gameLoop () {
-    drawfield() 
-    if (pause == true) console.log ('pause')
+    var now = Date.now();
+	var delta = now - then;
     if (!pause) {  
-        directionchange()
-        p1bounce()
-        ballbounce()
-        Score()
-        
-    } 
+        processInput(delta)
+        updatePosition(delta)
+        paddleCollisionCheck()
+        scoreCheck()
+    }
+    render()
+    then = now;
+    requestAnimationFrame(gameLoop);
 }
 function timer() {
     if (timer_couter%5 == 0) { // % -> Modulo  (Rest nach Division)
         ballspeed++
     }
 }
-
 function kicker1hit() {
-    var fak = (bally - p1positiony) / p1height
+    var fak = (bally - p1positiony) / paddleheight
     angle = (0.5 * (1 - fak)) - 0.25
 }
 function kicker2hit() {
-    var fak = (bally - p2positiony) / p2height
+    var fak = (bally - p2positiony) / paddleheight
     angle = (0.5 * (fak)) + 0.75
 }
-
-function p1bounce() {
-    if (ballx <= p1positionx + p1width && ballx >= p1positionx) {
-        if (bally + ballheight >= p1positiony && p1positiony + p1height >= bally) {
+function paddleCollisionCheck() {
+    if (ballx <= p1positionx + paddlewidth && ballx >= p1positionx) {
+        if (bally + ballheight >= p1positiony && p1positiony + paddleheight >= bally) {
             kicker1hit()
             timer_couter++
             timer()
         }
-    } if (ballx + ballwidth >= p2positionx && ballx + ballwidth <= p2positionx + p2width) {
-        if (bally + ballheight >= p2positiony && p2positiony + p2height >= bally) {
+    } if (ballx + ballwidth >= p2positionx && ballx + ballwidth <= p2positionx + paddlewidth) {
+        if (bally + ballheight >= p2positiony && p2positiony + paddleheight >= bally) {
             kicker2hit()
             timer_couter++
             timer()
         }
     }
-
 }
-
-function ballbounce() {
+function updatePosition(delta) {
+    var speed = ballspeed * delta / 10
     if (bally <= 10) {
         angle *= -1
     } else if (bally >= canvas.height - 20) {
         angle *= -1
     }
-    var deltax = Math.cos(angle * Math.PI) * ballspeed
-    var deltay = Math.sin(angle * Math.PI) * ballspeed
+    var deltax = Math.cos(angle * Math.PI) * speed
+    var deltay = Math.sin(angle * Math.PI) * speed
     ballx += deltax
     bally -= deltay
 }
-function Score () {
+function scoreCheck () {
     if (ballx <= 10) {
         ballx = 600
         bally = 300
@@ -99,51 +101,54 @@ function Score () {
     }
 }
 
-function directionchange (evt) {
+function processInput (delta) {
     if (UP_KEY in keysdown && p2positiony > 10) {
-        p2positiony += -4
+        p2positiony += -2 * delta / 10
         pause = false
     }if (DOWN_KEY in keysdown && p2positiony < 510) {
-        p2positiony += 4
+        p2positiony += 2 * delta / 10
         pause = false
     } if (W_KEY in keysdown && p1positiony > 10) {
-        p1positiony += -4
+        p1positiony += -2 * delta / 10
         pause = false
     } if (S_KEY in keysdown && p1positiony < 510) {
-        p1positiony += 4
+        p1positiony += 2 * delta / 10
         pause = false
     }
 }
-function drawfield() { 
+function render() { 
     ctx.fillStyle = "black";
     ctx.fillRect (0,0, canvas.width, canvas.height);
     ctx.fillStyle = "white";
     ctx.fillRect (ballx, bally, Ball, Ball)
     ctx.fillStyle = "blue";
-    ctx.fillRect (p1positionx,p1positiony,p1width,p1height)
+    ctx.fillRect (p1positionx,p1positiony,paddlewidth,paddleheight)
     ctx.fillStyle = "crimson"
-    ctx.fillRect (p2positionx,p2positiony, p2width, p2height)
+    ctx.fillRect (p2positionx,p2positiony, paddlewidth, paddleheight)
+
     var gradient = ctx.createLinearGradient(0, 0, 1200, 0);
     gradient.addColorStop("0", "blue");
     gradient.addColorStop("0.5", "lime");
     gradient.addColorStop("1", "crimson");
     gradient.addColorStop("0.25", "lightblue");
     gradient.addColorStop("0.75", "yellow");
+
     ctx.strokeStyle = gradient;
     ctx.lineWidth = 20;
     ctx.strokeRect(0, 0, 1200, 600);
     ctx.fillStyle ="lime"
     ctx.font ="20px Arial"
     ctx.fillText(p1score, 20, 580 )
-    ctx.fillStyle ="lime"
-    ctx.font ="20px Arial"
     ctx.fillText(p2score, 1150, 580)
+    if (pause) {
+        ctx.fillText('Pause', canvas.width/2-30, canvas.height/2 - 10)
+    }
+
 }
 window.onload = function () {
     var canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
-    gameId = setInterval(gameLoop, 10);
-    document.addEventListener ("keydown", function (evt) {
+    addEventListener ("keydown", function (evt) {
         if (P_KEY == evt.keyCode) {
             pause = !pause
         } else {
@@ -153,4 +158,5 @@ window.onload = function () {
     addEventListener ("keyup", function (evt) {
         delete keysdown[evt.keyCode];
     },false)
+    gameLoop()
 }
